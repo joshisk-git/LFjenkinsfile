@@ -36,6 +36,40 @@ node {
 
     } finally {
 
-        cleanWs()
+  
+	stage('Notify Discord') {
+            withCredentials([string(credentialsId: 'DISCORD_WEBHOOK', variable: 'DISCORD_WEBHOOK_URL')]) {
+                script {
+                    def color   = (BUILD_STATUS == "SUCCESS") ? "3066993"  : "15158332"
+                    def emoji   = (BUILD_STATUS == "SUCCESS") ? "[PASS]"   : "[FAIL]"
+                    def title   = (BUILD_STATUS == "SUCCESS") ? "Build Succeeded" : "Build Failed"
+                    def jobName = env.JOB_NAME ?: "Unknown Job"
+                    def buildNo = env.BUILD_NUMBER ?: "N/A"
+                    def buildUrl = env.BUILD_URL ?: "N/A"
+ 
+                    def payload = """
+                    {
+                      "embeds": [{
+                        "title": "${emoji} ${title}",
+                        "description": "**Job:** ${jobName}\\n**Build:** #${buildNo}\\n**Version:** ${APP_VERSION}\\n**Status:** ${BUILD_STATUS}\\n\\n[View Build Logs](${buildUrl})",
+                        "color": ${color},
+                        "footer": {
+                          "text": "Jenkins CI"
+                        }
+                      }]
+                    }
+                    """
+ 
+                    sh """
+                        curl -s -X POST \\
+                          -H "Content-Type: application/json" \\
+                          -d '${payload.trim()}' \\
+                          "\${DISCORD_WEBHOOK_URL}"
+                    """
+                }
+            }
+        }
+
+      cleanWs()
     }
 }

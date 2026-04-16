@@ -37,37 +37,46 @@ node {
     } finally {
 
   
-	stage('Notify Discord') {
-    withCredentials([string(credentialsId: 'DISCORD_WEBHOOK', variable: 'DISCORD_WEBHOOK_URL')]) {
-        script {
-    def status = currentBuild.currentResult
+	// Prevent notification failure from breaking build
+        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
 
-    def color   = (status == "SUCCESS") ? 3066993 : 15158332
-    def emoji   = (status == "SUCCESS") ? "✅" : "❌"
-    def title   = (status == "SUCCESS") ? "Build Succeeded" : "Build Failed"
+            stage('Notify Discord') {
 
-    def jobName  = env.JOB_NAME
-    def buildNo  = env.BUILD_NUMBER
-    def buildUrl = env.BUILD_URL
+                withCredentials([string(credentialsId: 'DISCORD_WEBHOOK', variable: 'DISCORD_WEBHOOK_URL')]) {
 
-    def repoFull = sh(script: "git config --get remote.origin.url", returnStdout: true).trim()
-    def repoName = repoFull.tokenize('/').last().replace('.git','')
+                    script {
 
-    def branch = sh(
-    script: "git branch --show-current || git rev-parse --abbrev-ref HEAD",
-    returnStdout: true).trim()
+                        def status = currentBuild.currentResult
 
-    def commit = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                        def color = (status == "SUCCESS") ? 3066993 : 15158332
+                        def emoji = (status == "SUCCESS") ? "✅" : "❌"
+                        def title = (status == "SUCCESS") ? "Build Succeeded" : "Build Failed"
 
-    def commitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
-    
+                        def jobName  = env.JOB_NAME
+                        def buildNo  = env.BUILD_NUMBER
+                        def buildUrl = env.BUILD_URL
 
+                        // ✅ Get Git details reliably
+                        def repoFull = sh(script: "git config --get remote.origin.url", returnStdout: true).trim()
+                        def repoName = repoFull.tokenize('/').last().replace('.git','')
 
-    def payload = """
+                        def branch = sh(
+                            script: "git branch --show-current || git rev-parse --abbrev-ref HEAD",
+                            returnStdout: true
+                        ).trim()
+
+                        def commit = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+
+                        def commitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+
+                        def repoWeb = repoFull.replace('.git','')
+
+                        // ✅ Discord payload
+                        def payload = """
 {
   "embeds": [{
     "title": "${emoji} ${title}",
-    "description": "**Job:** ${jobName}\\n**Build:** #${buildNo}\\n**Version:** ${APP_VERSION}\\n**Status:** ${status}\\n\\n📦 **Repo:** ${repo}\\n🌿 **Branch:** ${branch}\\n🔢 **Commit:** ${commit}\\n📝 **Message:** ${commitMsg}\\n\\n[View Build Logs](${buildUrl})",
+    "description": "**Job:** ${jobName}\\n**Build:** #${buildNo}\\n**Version:** ${APP_VERSION}\\n**Status:** ${status}\\n\\n📦 **Repo:** [${repoName}](${repoFull})\\n🌿 **Branch:** ${branch}\\n🔢 **Commit:** [${commit}](${repoWeb}/commit/${commit})\\n📝 **Message:** ${commitMsg}\\n\\n[View Build Logs](${buildUrl})",
     "color": ${color},
     "footer": {
       "text": "Jenkins CI"
@@ -76,16 +85,18 @@ node {
 }
 """
 
-            sh """
-                curl -s -X POST \\
-                  -H "Content-Type: application/json" \\
-                  -d '${payload.trim()}' \\
-                  "\${DISCORD_WEBHOOK_URL}"
-            """
+                        // ✅ Send to Discord
+                        sh """
+                            curl -s -X POST \\
+                              -H "Content-Type: application/json" \\
+                              -d '${payload.trim()}' \\
+                              "\${DISCORD_WEBHOOK_URL}"
+                        """
+                    }
+                }
+            }
         }
-    }
-}
 
-      cleanWs()
+        cleanWs()
     }
 }

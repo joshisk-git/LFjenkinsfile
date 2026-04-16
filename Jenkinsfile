@@ -60,10 +60,11 @@ node {
                         def repoFull = sh(script: "git config --get remote.origin.url", returnStdout: true).trim()
                         def repoName = repoFull.tokenize('/').last().replace('.git','')
 
-                        def branch = sh(
-                            script: "git branch --show-current || git rev-parse --abbrev-ref HEAD",
-                            returnStdout: true
-                        ).trim()
+                        
+			def branch = sh(
+ 		        script: "git name-rev --name-only HEAD || git rev-parse --abbrev-ref HEAD",
+    			returnStdout: true
+			).trim()
 
                         def commit = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
 

@@ -50,12 +50,18 @@ node {
     def buildNo  = env.BUILD_NUMBER
     def buildUrl = env.BUILD_URL
 
-    def repo     = env.GIT_URL ?: "N/A"
-    def branch   = env.GIT_BRANCH ?: "N/A"
-    def commit   = env.GIT_COMMIT?.take(7) ?: "N/A"
+    def repoFull = sh(script: "git config --get remote.origin.url", returnStdout: true).trim()
+    def repoName = repoFull.tokenize('/').last().replace('.git','')
 
-    // get commit message
+    def branch = sh(
+    script: "git branch --show-current || git rev-parse --abbrev-ref HEAD",
+    returnStdout: true).trim()
+
+    def commit = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+
     def commitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+    
+
 
     def payload = """
 {

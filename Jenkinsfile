@@ -78,7 +78,7 @@ node {
 {
   "embeds": [{
     "title": "${emoji} ${title}",
-    "description": "**Job:** ${jobName}\\n**Build:** #${buildNo}\\n**Version:** ${APP_VERSION}\\n**Status:** ${status}\\n\\n👤**Author:** ${authorName}\\n📦**Repo:** [${repoName}](${repoFull})\\n🌿 **Branch:** ${branch}\\n🔢 **Commit:** [${commit}](${repoWeb}/commit/${commit})\\n📝 **Message:** ${commitMsg}\\n\\n[View Build Logs](${buildUrl})",
+    "description": "**Job:** ${jobName}\\n**Build:** #${buildNo}\\n**Version:** ${APP_VERSION}\\n**Status:** ${status}\\n\\n👤**Author:** ${authorName}\\n📦**Repo:** [${repoName}](${repoFull})\\n🌿 **Branch:** ${branch}\\n🔢 **Commit:** [${commit}](${repoWeb}/commit/${commit})\\n📝 **Commit_Message:** ${commitMsg}\\n\\n[View Build Logs](${buildUrl})",
     "color": ${color},
     "footer": {
       "text": "Jenkins CI"
